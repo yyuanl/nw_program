@@ -1,7 +1,16 @@
 #define WIN32_LEAN_AND_MEAN
 #include <iostream>
+#ifdef _WIN32
 #include <windows.h>
 #include <winSock2.h>
+#else 
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <string.h>
+#define SOCKET int
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define SOCKET_ERROR            (-1)
+#endif
 #include <stdlib.h>
 #include <thread>
 #pragma comment(lib, "ws2_32.lib")
@@ -23,10 +32,11 @@ void cmd_thread(SOCKET req_sock) {
 }
 int main() {
 	//启动socket网络服务
+#ifdef _WIN32
 	WORD ver = MAKEWORD(2, 2);
 	WSADATA data;
 	WSAStartup(ver, &data);
-
+#endif
 	SOCKET req_sock = socket(AF_INET, SOCK_STREAM, 0);  // socket()
 	if (INVALID_SOCKET == req_sock) {
 		cout << "error, create socket failture" << endl;
@@ -37,8 +47,12 @@ int main() {
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-	int ret = connect(req_sock,(sockaddr*)&_sin, sizeof(sockaddr_in));  // connect()
+#ifdef _WIN32
+	_sin.sin_addr.S_un.S_addr = inet_addr("192.168.1.112");
+#else
+	_sin.sin_addr.s_addr = inet_addr("192.168.1.112");
+#endif
+	int ret = connect(req_sock, (sockaddr*)&_sin, sizeof(sockaddr_in));  // connect()
 	if (ret == SOCKET_ERROR) {
 		cout << "error, connect to server failture" << endl;
 	}
@@ -56,7 +70,7 @@ int main() {
 	while (!is_exit) {
 		FD_SET(req_sock, &read_set);
 		FD_SET(req_sock, &write_set);
-		timeval t = {1,0};  //阻塞1s  不设置阻塞时间则一致阻塞在select这里，无法发送数据
+		timeval t = { 1,0 };  //阻塞1s  不设置阻塞时间则一致阻塞在select这里，无法发送数据
 		int res = select(req_sock + 1, &read_set, &write_set, NULL, &t);
 		if (res < 0) {
 			printf("select failture");
@@ -90,27 +104,13 @@ int main() {
 		send(req_sock, p, MSGBUFLEN, 0);
 		Sleep(1000);*/
 
-
-
-
-
-
-
-		/*char msgbuf[128] = {};
-		printf("please input your command:");
-		scanf("%s", msgbuf);
-		if (0 == strcmp(msgbuf, "exit")) {
-			printf("get exit command\n");
-			break;
-		}*/
-		//printf("====get input is %s \n", msgbuf);
-		// send command to server
-		
-		
 	}
+#ifdef _WIN32
 	closesocket(req_sock);
-	// 关闭
 	WSACleanup();
+#else
+	close(req_sock);
+#endif
 	printf("client exit...\n");
 	getchar();
 	return 0;

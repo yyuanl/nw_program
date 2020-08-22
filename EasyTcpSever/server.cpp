@@ -78,7 +78,8 @@ int main() {
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567); // 主机到 网络字节顺序
-	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	_sin.sin_addr.S_un.S_addr = inet_addr("192.168.1.112");
+
 	//_sin.sin_addr.S_un.S_addr = inet_pton("127.0.0.1");
 	//inet_pton();
 	if (bind(listen_fd, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR) {
