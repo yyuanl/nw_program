@@ -3,9 +3,24 @@
 #include <windows.h>
 #include <winSock2.h>
 #include <stdlib.h>
+#include <thread>
 #pragma comment(lib, "ws2_32.lib")
 constexpr auto MSGBUFLEN = 128;
 using namespace std;
+bool is_exit = false;
+void cmd_thread(SOCKET req_sock) {
+	while (1) {
+		char cmdbuf[MSGBUFLEN];
+		scanf("%s", cmdbuf);
+		if (0 == strcmp(cmdbuf, "exit")) {
+			printf("exit client commond.\n");
+			is_exit = true;
+			return;
+		}
+		send(req_sock, cmdbuf, MSGBUFLEN, 0);
+	}
+
+}
 int main() {
 	//启动socket网络服务
 	WORD ver = MAKEWORD(2, 2);
@@ -30,16 +45,19 @@ int main() {
 	else {
 		cout << "connect to server successfully" << endl;
 	}
+	std::thread td(cmd_thread, req_sock);
+	td.detach();
 	fd_set read_set;
 	fd_set write_set;
 	FD_ZERO(&read_set);
 	FD_ZERO(&write_set);
 	FD_SET(req_sock, &read_set);
 	FD_SET(req_sock, &write_set);
-	while (1) {
+	while (!is_exit) {
 		FD_SET(req_sock, &read_set);
 		FD_SET(req_sock, &write_set);
-		int res = select(req_sock + 1, &read_set, &write_set, NULL, NULL);
+		timeval t = {1,0};  //阻塞1s  不设置阻塞时间则一致阻塞在select这里，无法发送数据
+		int res = select(req_sock + 1, &read_set, &write_set, NULL, &t);
 		if (res < 0) {
 			printf("select failture");
 			break;
@@ -56,23 +74,27 @@ int main() {
 			}
 		}
 
-		if (FD_ISSET(req_sock, &write_set)) {
-			int flag = rand() % 3;
-			char msgbuf1[MSGBUFLEN] = "getName";
-			char msgbuf2[MSGBUFLEN] = "getAge";
-			char msgbuf3[MSGBUFLEN] = "otherCommand";
-			const char *p = NULL;
-			switch (flag)
-			{
-			case 0: p = msgbuf1; break;
-			case 1: p = msgbuf2; break;
-			case 2: p = msgbuf3; break;
-			default:
-				break;
-			}
-			send(req_sock, p, MSGBUFLEN, 0);
-			Sleep(1000);
+		/*int flag = rand() % 3;
+		char msgbuf1[MSGBUFLEN] = "getName";
+		char msgbuf2[MSGBUFLEN] = "getAge";
+		char msgbuf3[MSGBUFLEN] = "otherCommand";
+		const char *p = NULL;
+		switch (flag)
+		{
+		case 0: p = msgbuf1; break;
+		case 1: p = msgbuf2; break;
+		case 2: p = msgbuf3; break;
+		default:
+			break;
 		}
+		send(req_sock, p, MSGBUFLEN, 0);
+		Sleep(1000);*/
+
+
+
+
+
+
 
 		/*char msgbuf[128] = {};
 		printf("please input your command:");
