@@ -32,7 +32,7 @@ STATE_RECV_SEND recv_send(SOCKET conn_fd, char *recvbuf, int buf_len) {
 	if (num <= 0) {
 		printf("client exit or recv error...\n");
 		return RECV_ABNORMAL;
-	}
+	} 
 	printf("get client command : %s\n", recvbuf);
 	//处理请求
 	if (0 == strcmp(recvbuf, "getName")) {
@@ -71,7 +71,7 @@ void check_client_pool(vector<SOCKET> &pool, fd_set *ready_set, fd_set *read_set
 				close(*iter);
 #endif
 				FD_CLR(*iter, read_set);
-				iter = pool.erase(iter); // 迭代器失效做法
+				iter = pool.erase(iter); // 防止迭代器失效做法
 			}
 			else {
 				iter++;
