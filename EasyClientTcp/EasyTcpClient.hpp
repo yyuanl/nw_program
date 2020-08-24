@@ -105,7 +105,7 @@ bool EasyClientTcp::runWithSelect() {
 	FD_ZERO(&write_set);
 	FD_SET(_sock, &read_set);
 	FD_SET(_sock, &write_set);
-	timeval t = { 1,0 };  //阻塞1s  不设置阻塞时间则一致阻塞在select这里
+	timeval t = { 0,0 };  //阻塞1s  不设置阻塞时间则一致阻塞在select这里
 	int res = select(_sock + 1, &read_set, &write_set, NULL, &t);
 	if (res < 0) {
 		printf("select failture");
